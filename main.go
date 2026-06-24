@@ -7,6 +7,7 @@ import (
   "os"
   "io"
   "strconv"
+  "bufio"
 )
 
 type ValueType string
@@ -83,15 +84,17 @@ func main(){
 		handle(conn, &v)
 
 		fmt.Println(v.array)
-
-		conn.Write([]byte("+OK\r\n"))
 	}
 	
 }
 
 type Handler func(*Value) *Value
 
-var Handlers = map[string]Handler{}
+var Handlers = map[string]Handler{
+	"COMMAND": command,
+	"GET": get,
+	"SET": set,
+}
 
 var DB = map[string]string{}
 
@@ -104,14 +107,14 @@ func handle(conn net.Conn, v *Value){
 	}
 
 	reply := handler(v)
-	w : = NewWriter(conn)
+	w := NewWriter(conn)
 	w.Write(reply)
 }
 
 func get(v *Value) *Value {
 	args := v.array[1:]
 	if len(args) != 1 {
-		return &Value{typ: ERROR, err:"ERR invalid number of arguments for get command"}
+		return &Value{typ: ERROR, err:"ERR invalid number of arguments for 'GET' command"}
 	}
 
 	name := args[0].bulk
@@ -123,7 +126,22 @@ func get(v *Value) *Value {
 	return &Value{typ: BULK, bulk: val}
 }
 
+func set(v *Value) *Value {
+	args := v.array[1:]
+	if len(args) != 2 {
+		return &Value{typ: ERROR, err: "ERR invalid number of arguments for 'SET' command"}
+	}
 
+	key := args[0].bulk
+	val := args[1].bulk
+	DB[key] = val
+	
+	return &Value{typ: STRING, str: "OK"}
+}
+
+func command(v *Value) *Value{
+	return &Value{typ: STRING, str: "OK"}
+}
 
 type Writer struct {
 	writer io.Writer
@@ -147,4 +165,5 @@ func (w *Writer) Write(v *Value){
 	}
 
 	w.writer.Write([]byte(reply))
+	w.writer.(*bufio.Writer).Flush()
 }
