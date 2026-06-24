@@ -80,6 +80,7 @@ func main(){
 	for {
         v:= Value{typ: ARRAY}
 		v.readArray(conn)
+		handle(conn, &v)
 
 		fmt.Println(v.array)
 
@@ -91,6 +92,8 @@ func main(){
 type Handler func(*Value) *Value
 
 var Handlers = map[string]Handler{}
+
+var DB = map[string]string{}
 
 func handle(conn net.Conn, v *Value){
 	cmd := v.array[0].bulk
@@ -104,6 +107,23 @@ func handle(conn net.Conn, v *Value){
 	w : = NewWriter(conn)
 	w.Write(reply)
 }
+
+func get(v *Value) *Value {
+	args := v.array[1:]
+	if len(args) != 1 {
+		return &Value{typ: ERROR, err:"ERR invalid number of arguments for get command"}
+	}
+
+	name := args[0].bulk
+	val, ok := DB[name]
+	if !ok {
+		return &Value{typ: NULL}
+	}
+
+	return &Value{typ: BULK, bulk: val}
+}
+
+
 
 type Writer struct {
 	writer io.Writer
