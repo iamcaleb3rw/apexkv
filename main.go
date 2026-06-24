@@ -69,6 +69,7 @@ func main(){
 		fmt.Println(err)
 		os.Exit(1)
 	}
+	log.Println("Listening on :6379")
 
 	defer conn.Close()
 
@@ -83,4 +84,19 @@ func main(){
 		conn.Write([]byte("+OK\r\n"))
 	}
 	
+}
+
+type Handler func(*Value) *Value
+
+var Handlers = map[string]Handler{}
+
+func handle(conn net.Conn, v *Value){
+	cmd := v.array[0].bulk
+	handler, ok := Handlers[cmd]
+	if !ok {
+		fmt.Println("invalid command: , cmd")
+		return
+	}
+
+	handler(v)
 }
