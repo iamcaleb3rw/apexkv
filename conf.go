@@ -4,6 +4,8 @@ import (
 	"os"
 	"bufio"
 	"strconv"
+	"fmt"
+	"strings"
 )
 
 type Config struct {
@@ -80,7 +82,7 @@ func parseLine(l string, conf *Config) {
 
 		snapshot := RDBSnapshot{
 			Secs: secs, 
-			KeysChanged: keysChanged
+			KeysChanged: keysChanged,
 		}
 		conf.rdb = append(conf.rdb, snapshot)
 	case "dbfilename":

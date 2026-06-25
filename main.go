@@ -61,6 +61,10 @@ func (v *Value) readBulk(reader io.Reader) Value {
 	return Value{typ: BULK, bulk: bulk}
 }
 func main(){
+	log.Println("reading config file")
+	readConf("./redis.conf")
+
+
 	l, err := net.Listen("tcp", ":6379")
 	if err != nil {
 		log.Fatal("Cannot Listen on :6379")
